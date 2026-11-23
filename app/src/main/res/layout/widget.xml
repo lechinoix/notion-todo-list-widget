@@ -1,0 +1,10 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" android:layout_width="match_parent" android:layout_height="match_parent" android:orientation="vertical" android:background="@drawable/widget_background">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="48dp" android:gravity="center_vertical">
+        <TextView android:id="@+id/heading" android:layout_width="0dp" android:layout_weight="1" android:layout_height="match_parent" android:gravity="center_vertical" android:text="My tasks" android:textSize="21sp" android:textStyle="bold" android:textColor="@color/ink" android:contentDescription="Open tasks and settings"/>
+        <TextView android:id="@+id/refresh" android:layout_width="48dp" android:layout_height="48dp" android:gravity="center" android:text="↻" android:textSize="27sp" android:textColor="@color/ink" android:contentDescription="Refresh tasks"/>
+        <TextView android:id="@+id/add" android:layout_width="48dp" android:layout_height="48dp" android:gravity="center" android:text="+" android:textSize="30sp" android:textColor="@color/ink" android:contentDescription="Add task"/>
+    </LinearLayout>
+    <TextView android:id="@+id/status" android:layout_width="match_parent" android:layout_height="wrap_content" android:textSize="11sp" android:textColor="@color/muted" android:maxLines="2" android:paddingBottom="8dp"/>
+    <ListView android:id="@+id/tasks" android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1" android:divider="#DCE3DB" android:dividerHeight="1dp"/>
+    <TextView android:id="@+id/empty" android:layout_width="match_parent" android:layout_height="wrap_content" android:padding="16dp" android:text="All caught up ✓" android:gravity="center" android:textColor="@color/muted"/>
+</LinearLayout>

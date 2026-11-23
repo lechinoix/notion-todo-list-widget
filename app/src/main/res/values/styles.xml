@@ -1,0 +1,21 @@
+<resources>
+    <color name="ink">#23352F</color>
+    <color name="muted">#63756C</color>
+    <color name="paper">#F5F6F0</color>
+    <style name="AppTheme" parent="android:style/Theme.Material.Light.NoActionBar">
+        <item name="android:fontFamily">sans</item>
+        <item name="android:colorAccent">#32755D</item>
+        <item name="android:windowLightStatusBar">true</item>
+        <item name="android:windowBackground">@color/paper</item>
+        <item name="android:colorControlHighlight">#D7E9DC</item>
+        <item name="android:navigationBarColor">@color/paper</item>
+    </style>
+    <style name="TaskTheme" parent="android:style/Theme.Material.Light.Dialog.NoActionBar">
+        <item name="android:colorAccent">#32755D</item>
+        <item name="android:windowMinWidthMajor">92%</item>
+        <item name="android:windowMinWidthMinor">92%</item>
+        <item name="android:windowCloseOnTouchOutside">false</item>
+    </style>
+    <string name="app_name">Notion Tasks</string>
+    <string name="widget_description">Your Notion tasks: complete, add and tag from your home screen.</string>
+</resources>
