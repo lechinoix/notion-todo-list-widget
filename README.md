@@ -21,6 +21,10 @@ Android 8.0+ (API 26). The app supports a **Title**, **Status**, and **Multi-sel
 
 The secret stays encrypted using Android Keystore on your device. It is entered in the app, never in the repository or APK. App data is excluded from cloud backup and device transfer; reconnect after reinstalling or moving phones. Task titles/tags are cached in the app's private storage and visible in the home-screen widget.
 
+## Updating without losing the token
+
+Install the new APK over the existing app (or use `adb install -r artifacts/notion-tasks.apk`). Keep the same application ID and signing key. Android preserves the app's private preferences and Keystore entry during an in-place update, so the encrypted token and table settings remain available. Do **not** uninstall or clear app data first. If Android reports a signature mismatch, rebuild using the original signing key; uninstalling would erase the saved connection.
+
 ## Sync and errors
 
 - Successful edits update the cache/widget immediately and refresh from Notion.
@@ -39,7 +43,7 @@ Requires JDK 17, Android SDK platform 35, Build-Tools 35.0.1, and internet for G
 ./scripts/build-apk.sh
 ```
 
-Output: `artifacts/notion-tasks.apk` and its SHA-256 checksum. The script runs unit tests and Android lint, builds release, aligns it and signs it with a locally generated key. **Back up `~/.android/notion-todo-widget-signing/` securely.** Future installations over this app require the same signing key. Never commit that directory. Override its location with `NOTION_SIGNING_DIR` if needed.
+Output: `artifacts/notion-tasks.apk` and its SHA-256 checksum. The script runs unit tests and Android lint, builds release, aligns it and signs it with your existing local key. On a first-ever build only, pass `NOTION_ALLOW_NEW_SIGNING_KEY=1` to generate a key. **Back up `~/.android/notion-todo-widget-signing/` securely.** Future installations over this app require the same signing key. Never commit that directory. Override its location with `NOTION_SIGNING_DIR` if needed. The build refuses to generate a replacement key by default, preventing accidental signature changes during updates.
 
 For development:
 
@@ -54,8 +58,17 @@ Debug and release have different signatures. If switching between them, uninstal
 
 ## Implementation and verification
 
-Native Java Android activities and a resizable, scrolling `RemoteViews` widget; WorkManager handles refresh/completion outside the launcher, OkHttp calls Notion directly. The checkbox uses an activity PendingIntent that immediately queues completion and closes, avoiding background launch restrictions; adding/editing opens a compact task dialog.
+Native Kotlin Android activities and a resizable, scrolling `RemoteViews` widget; WorkManager handles refresh/completion outside the launcher, OkHttp calls Notion directly. Widget rows use a broadcast PendingIntent: checking a task queues completion without opening an activity, while tapping its title opens the tag editor in a separate task. Adding a task also opens a separate task, so saving or cancelling returns to the launcher even when the main app already has a screen open. The create checkmark sits to the right of the title input.
+
+After Notion confirms completion, the widget requests a checked/struck-through row, a dimmed row 250 ms later, and removal after another 250 ms. This is best-effort, stepped feedback rather than a frame-by-frame animation: launchers may delay or combine RemoteViews updates. Smooth sliding of the remaining ListView rows is not controlled by this app. Failed writes retain the task and display a retry message.
 
 Notion API is pinned to `2025-09-03` and uses [data source endpoints](https://developers.notion.com/guides/get-started/upgrade-guide-2025-09-03), [paginated queries](https://developers.notion.com/reference/query-a-data-source), and page property patches. Widget implementation follows [Android collection widget APIs](https://developer.android.com/develop/ui/views/appwidgets/collections).
 
 Automated API tests use a mock HTTP server to verify pagination, headers, database/data-source resolution, property IDs, completion, creation, existing tags, error handling, and no automatic creation retries. Android instrumentation checks encrypted storage, cached data, setup/layout inflation, and widget registration. No real Notion task is created or changed by these tests. Live workspace verification requires configuring your connection on the device.
+
+### Device checks for widget interaction changes
+
+- Install the update over a release signed with the same key; confirm tasks load without entering the secret again.
+- Leave Settings open, go home, then create a task from **+**. Confirm the checkmark is beside the input and successful save returns home. Repeat for title/tag editing and cancellation; ordinary in-app editing should return to the app.
+- Complete a widget task with the app closed and with Settings in the background. Confirm no activity appears, checked/dimmed feedback precedes removal, and the remaining rows fill the gap. Check Android 8 and a recent Android version/launcher, including title-to-editor navigation.
+- Disable connectivity and complete a task; confirm it stays visible with a retry message. Restore connectivity and retry, including rapid repeated taps and multiple widget instances.

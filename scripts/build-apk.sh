@@ -8,6 +8,7 @@ if [[ -z "${JAVA_HOME:-}" ]]; then
   echo 'Set JAVA_HOME to your JDK 17 installation.' >&2
   exit 1
 fi
+export PATH="$JAVA_HOME/bin:$PATH"
 sdk="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-$HOME/Library/Android/sdk}}"
 build_tools="$sdk/build-tools/35.0.1"
 if [[ ! -x "$build_tools/apksigner" ]]; then
@@ -16,10 +17,14 @@ if [[ ! -x "$build_tools/apksigner" ]]; then
 fi
 # Keep this directory backed up: future APK updates must use the same key.
 signing_dir="${NOTION_SIGNING_DIR:-$HOME/.android/notion-todo-widget-signing}"
-mkdir -p "$signing_dir"
-chmod 700 "$signing_dir"
 umask 077
 if [[ ! -f "$signing_dir/release.p12" ]]; then
+  if [[ "${NOTION_ALLOW_NEW_SIGNING_KEY:-0}" != 1 ]]; then
+    echo 'Original signing key not found. Set NOTION_SIGNING_DIR to its folder. For a first-ever installation only, use NOTION_ALLOW_NEW_SIGNING_KEY=1.' >&2
+    exit 1
+  fi
+  mkdir -p "$signing_dir"
+  chmod 700 "$signing_dir"
   if [[ ! -f "$signing_dir/password" ]]; then
     openssl rand -hex 32 > "$signing_dir/password"
   fi
@@ -27,6 +32,10 @@ if [[ ! -f "$signing_dir/release.p12" ]]; then
     -storetype PKCS12 -alias notion-tasks -keyalg RSA -keysize 3072 -validity 10000 \
     -storepass:file "$signing_dir/password" -keypass:file "$signing_dir/password" \
     -dname 'CN=Notion Tasks Personal Install' >/dev/null 2>&1
+fi
+if [[ ! -f "$signing_dir/password" ]]; then
+  echo 'Signing password file missing from NOTION_SIGNING_DIR.' >&2
+  exit 1
 fi
 ./gradlew :app:testDebugUnitTest :app:lintDebug :app:assembleRelease --console=plain
 mkdir -p artifacts
